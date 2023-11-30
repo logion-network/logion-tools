@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/logion-network/logion-api.git"
+  },
+  "author": "Logion Team",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "packageManager": "yarn@3.2.0",
+  "scripts": {
+    "build": "yarn workspaces foreach -t run build",
+    "clean": "yarn workspaces foreach -t run clean",
+    "lint": "yarn workspaces foreach -t run lint",
+    "test": "yarn workspaces foreach -t run test"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "compilerOptions": {
+    "module": "es2022",
+    "target": "es2020",
+    "baseUrl": "./packages",
+    "declaration": true
+  },
+  "exclude": [
+    "**/node_modules/**/*"
+  ]
+}
