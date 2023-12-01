@@ -1,6 +1,6 @@
-import { CreateCsv, WithFile, WithToken } from "../src/CreateCsv.js";
+import { CreateCsv, WithFile, WithToken, WithTC } from "../src/CreateCsv.js";
 import { ParseOptions, Command } from "commander";
-import { Row } from "@fast-csv/format/build/src/types";
+import { Row, RowMap } from "@fast-csv/format/build/src/types";
 import { MimeType } from "@logion/client";
 
 describe("CreateCsv - command - ", () => {
@@ -68,11 +68,13 @@ describe("CreateCsv - CSV output ", () => {
     const COLUMNS_WITH_FILE_AND_TOKEN = [ ...COLUMNS_WITH_FILE, 'RESTRICTED', ...TOKEN_COLUMNS] as const;
     const COLUMNS_WITH_TOKEN = [ ...COLUMNS_WITHOUT_FILE, ...TOKEN_COLUMNS] as const;
 
-    const withFile: WithFile = {
-        name: "fileName",
-        contentType: MimeType.from("image/png"),
-        restricted: true,
-    };
+    function withFile(restricted: boolean): WithFile {
+        return {
+            name: "fileName",
+            contentType: MimeType.from("image/png"),
+            restricted,
+        }
+    }
 
     const withToken: WithToken = {
         type: "astar_psp34",
@@ -81,29 +83,81 @@ describe("CreateCsv - CSV output ", () => {
         contractAddress: "ABC",
     };
 
+    const withTC: WithTC = {
+        type: "logion_classification",
+        parameters: '{"transferredRights":["PER-PRIV","REG","TIME"],"regionalLimit":["BE","FR","US"],"expiration":"2022-09-23"}'
+    }
+
     let createCsv = new CreateCsv();
 
     it("works Without File", () => {
-        const row = createCsv.createRow({})
-        checkKeys(row, COLUMNS_WITHOUT_FILE)
+        const row = createCsv.createRow({});
+        checkKeys(row, COLUMNS_WITHOUT_FILE);
+        checkCommonColumns(row, "0");
     })
 
     it("works With File", () => {
-        const row = createCsv.createRow({ withFile });
-        checkKeys(row, COLUMNS_WITH_FILE)
+        const row = createCsv.createRow({ withFile: withFile(false) });
+        checkKeys(row, COLUMNS_WITH_FILE);
+        checkCommonColumns(row, "0");
+        checkFileColumns(row);
     })
 
     it("works With Token", () => {
         const row = createCsv.createRow({ withToken })
-        checkKeys(row, COLUMNS_WITH_TOKEN)
+        checkKeys(row, COLUMNS_WITH_TOKEN);
+        checkCommonColumns(row, "0xfd8e45608baccf004189a794eee8947ad095dd561e0981fcae90309fac5cf8fe");
+        checkTokenColumns(row);
+    })
+
+    it("works With restricted delivery File And Token", () => {
+        const row = createCsv.createRow({ withFile: withFile(true), withToken, withTC })
+        checkKeys(row, COLUMNS_WITH_FILE_AND_TOKEN);
+        checkCommonColumns(row, "0xfd8e45608baccf004189a794eee8947ad095dd561e0981fcae90309fac5cf8fe", withTC);
+        checkFileColumns(row, { restricted: "Y" });
+        checkTokenColumns(row);
     })
 
     it("works With File And Token", () => {
-        const row = createCsv.createRow({ withFile, withToken })
-        checkKeys(row, COLUMNS_WITH_FILE_AND_TOKEN)
+        const row = createCsv.createRow({ withFile: withFile(false), withToken, withTC })
+        checkKeys(row, COLUMNS_WITH_FILE_AND_TOKEN);
+        checkCommonColumns(row, "0xfd8e45608baccf004189a794eee8947ad095dd561e0981fcae90309fac5cf8fe", withTC);
+        checkFileColumns(row, { restricted: "N" });
+        checkTokenColumns(row);
     })
 
     function checkKeys(row: Row, keys: readonly string[]) {
         expect(Object.keys(row)).toEqual(keys);
+    }
+
+    function checkCommonColumns(row: Row, expectedId: string, withTC?: WithTC) {
+        const rowMap = row as RowMap;
+        expect(rowMap['ID']).toEqual(expectedId);
+        expect(rowMap['DESCRIPTION']).toEqual('description');
+        if (withTC) {
+            expect(rowMap['TERMS_AND_CONDITIONS TYPE']).toEqual(withTC.type);
+            expect(rowMap['TERMS_AND_CONDITIONS PARAMETERS']).toEqual(withTC.parameters);
+        } else {
+            expect(rowMap['TERMS_AND_CONDITIONS TYPE']).toEqual('none');
+            expect(rowMap['TERMS_AND_CONDITIONS PARAMETERS']).toEqual('none');
+        }
+    }
+
+    function checkFileColumns(row: Row, withRestricted?: { restricted: string}) {
+        const rowMap = row as RowMap;
+        expect(rowMap['FILE NAME']).toEqual('fileName.png');
+        expect(rowMap['FILE CONTENT TYPE']).toEqual('image/png');
+        expect(rowMap['FILE SIZE']).toEqual(123456);
+        expect(rowMap['FILE HASH']).toEqual('0x0000000000000000000000000000000000000000000000000000000000000000');
+        if (withRestricted) {
+            expect(rowMap['RESTRICTED']).toEqual(withRestricted.restricted);
+        }
+    }
+
+    function checkTokenColumns(row: Row) {
+        const rowMap = row as RowMap;
+        expect(rowMap['TOKEN TYPE']).toEqual('astar_psp34');
+        expect(rowMap['TOKEN ID']).toEqual('{"contract":"ABC","id":{"U64":0}}');
+        expect(rowMap['TOKEN ISSUANCE']).toEqual(1);
     }
 })

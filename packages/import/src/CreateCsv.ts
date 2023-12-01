@@ -42,7 +42,7 @@ export interface WithToken {
 
 export interface WithTC {
     type: TermsAndConditionsElementType,
-    details: string,
+    parameters: string,
 }
 
 export class CreateCsv {
@@ -127,7 +127,7 @@ export class CreateCsv {
         if (tcType) {
             params.withTC = {
                 type: tcType,
-                details: options.tcDetails
+                parameters: options.tcDetails
             }
         }
 
@@ -158,7 +158,7 @@ export class CreateCsv {
             ["ID"]: itemId,
             ["DESCRIPTION"]: "description",
             ["TERMS_AND_CONDITIONS TYPE"]: withTC ? withTC.type : "none",
-            ["TERMS_AND_CONDITIONS PARAMETERS"]: withTC ? withTC.details : "none",
+            ["TERMS_AND_CONDITIONS PARAMETERS"]: withTC ? withTC.parameters : "none",
         };
         if (withFile) {
             row = {

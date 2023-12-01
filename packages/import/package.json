@@ -1,5 +1,5 @@
 {
-  "name": "@logion/import-tool",
+  "name": "@logion/import",
   "version": "0.1.0-3",
   "description": "Logion Import Tool",
   "main": "dist/index.js",
@@ -17,7 +17,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/logion-network/logion-tools.git",
-    "directory": "packages/import-tool"
+    "directory": "packages/import"
   },
   "keywords": [
     "logion",
@@ -35,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/logion-network/logion-tools/issues"
   },
-  "homepage": "https://github.com/logion-network/logion-tools/packages/import-tool#readme",
+  "homepage": "https://github.com/logion-network/logion-tools/packages/import#readme",
   "devDependencies": {
     "@tsconfig/node18": "^1.0.1",
     "@types/figlet": "^1.5.8",
