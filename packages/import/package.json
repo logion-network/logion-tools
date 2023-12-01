@@ -1,6 +1,6 @@
 {
   "name": "@logion/import",
-  "version": "0.1.0-3",
+  "version": "0.1.0-1",
   "description": "Logion Import Tool",
   "main": "dist/index.js",
   "bin": {
