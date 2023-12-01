@@ -163,9 +163,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@logion/import-tool@workspace:packages/import-tool":
+"@logion/import@workspace:packages/import":
   version: 0.0.0-use.local
-  resolution: "@logion/import-tool@workspace:packages/import-tool"
+  resolution: "@logion/import@workspace:packages/import"
   dependencies:
     "@logion/client-node": ^0.2.1-1
     "@tsconfig/node18": ^1.0.1
