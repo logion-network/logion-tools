@@ -58,19 +58,24 @@ describe("CreateCsv - command - ", () => {
     it("succeeds with no option", () => {
         command.parse([ "create-csv" ], parseOptions);
     })
+
+    it("fails if --num-of-rows and --dir are combined", () => {
+        expect(() => command.parse([ "create-csv", "--num-of-rows", "10", "--dir", "some-dir" ], parseOptions))
+            .toThrowError("Invalid --num-of-rows and --dir are mutually exclusive")
+    })
 })
 
 describe("CreateCsv - CSV output ", () => {
 
-    const COLUMNS_WITHOUT_FILE = ['ID', 'DESCRIPTION', 'TERMS_AND_CONDITIONS TYPE', 'TERMS_AND_CONDITIONS PARAMETERS'] as const;
-    const COLUMNS_WITH_FILE = [ ...COLUMNS_WITHOUT_FILE, 'FILE NAME', 'FILE CONTENT TYPE', 'FILE SIZE', 'FILE HASH'] as const;
-    const TOKEN_COLUMNS = ['TOKEN TYPE', 'TOKEN ID', 'TOKEN ISSUANCE'] as const;
-    const COLUMNS_WITH_FILE_AND_TOKEN = [ ...COLUMNS_WITH_FILE, 'RESTRICTED', ...TOKEN_COLUMNS] as const;
-    const COLUMNS_WITH_TOKEN = [ ...COLUMNS_WITHOUT_FILE, ...TOKEN_COLUMNS] as const;
+    const COLUMNS_WITHOUT_FILE = [ 'ID', 'DESCRIPTION', 'TERMS_AND_CONDITIONS TYPE', 'TERMS_AND_CONDITIONS PARAMETERS' ] as const;
+    const COLUMNS_WITH_FILE = [ ...COLUMNS_WITHOUT_FILE, 'FILE NAME', 'FILE CONTENT TYPE', 'FILE SIZE', 'FILE HASH' ] as const;
+    const TOKEN_COLUMNS = [ 'TOKEN TYPE', 'TOKEN ID', 'TOKEN ISSUANCE' ] as const;
+    const COLUMNS_WITH_FILE_AND_TOKEN = [ ...COLUMNS_WITH_FILE, 'RESTRICTED', ...TOKEN_COLUMNS ] as const;
+    const COLUMNS_WITH_TOKEN = [ ...COLUMNS_WITHOUT_FILE, ...TOKEN_COLUMNS ] as const;
 
-    function withFile(restricted: boolean): WithFile {
+    function withFile(restricted: boolean, dir?: string): WithFile {
         return {
-            name: "fileName",
+            dir,
             contentType: MimeType.from("image/png"),
             restricted,
         }
@@ -89,41 +94,66 @@ describe("CreateCsv - CSV output ", () => {
     }
 
     let createCsv = new CreateCsv();
+    const file = createCsv.scaffold(MimeType.from("image/png"), 0);
 
-    it("works Without File", () => {
-        const row = createCsv.createRow({});
+    it("works Without File", async () => {
+        const row = await createCsv.createRow({});
         checkKeys(row, COLUMNS_WITHOUT_FILE);
         checkCommonColumns(row, "0");
     })
 
-    it("works With File", () => {
-        const row = createCsv.createRow({ withFile: withFile(false) });
+    it("works With File", async () => {
+        const row = await createCsv.createRow({ withFile: withFile(false) }, file);
         checkKeys(row, COLUMNS_WITH_FILE);
         checkCommonColumns(row, "0");
         checkFileColumns(row);
     })
 
-    it("works With Token", () => {
-        const row = createCsv.createRow({ withToken })
+    it("works With Token", async () => {
+        const row = await createCsv.createRow({ withToken })
         checkKeys(row, COLUMNS_WITH_TOKEN);
         checkCommonColumns(row, "0xfd8e45608baccf004189a794eee8947ad095dd561e0981fcae90309fac5cf8fe");
         checkTokenColumns(row);
     })
 
-    it("works With restricted delivery File And Token", () => {
-        const row = createCsv.createRow({ withFile: withFile(true), withToken, withTC })
+    it("works With restricted delivery File And Token", async () => {
+        const row = await createCsv.createRow({ withFile: withFile(true), withToken, withTC }, file)
         checkKeys(row, COLUMNS_WITH_FILE_AND_TOKEN);
         checkCommonColumns(row, "0xfd8e45608baccf004189a794eee8947ad095dd561e0981fcae90309fac5cf8fe", withTC);
         checkFileColumns(row, { restricted: "Y" });
         checkTokenColumns(row);
     })
 
-    it("works With File And Token", () => {
-        const row = createCsv.createRow({ withFile: withFile(false), withToken, withTC })
+    it("works With File And Token", async () => {
+        const row = await createCsv.createRow({ withFile: withFile(false), withToken, withTC }, file)
         checkKeys(row, COLUMNS_WITH_FILE_AND_TOKEN);
         checkCommonColumns(row, "0xfd8e45608baccf004189a794eee8947ad095dd561e0981fcae90309fac5cf8fe", withTC);
         checkFileColumns(row, { restricted: "N" });
         checkTokenColumns(row);
+    })
+
+    it("generates CSV from directory", async () => {
+        const rows: RowMap[] = [];
+        await createCsv.generateCsv(
+            {
+                withFile: {
+                    contentType: MimeType.from("application/pdf"),
+                    dir: "./test/resources",
+                    restricted: true,
+                },
+                withToken,
+                withTC
+            }, (row) => rows.push(row))
+        expect(rows.length).toEqual(3)
+        expect(rows[0]['FILE NAME']).toEqual("test-0.pdf")
+        expect(rows[0]['FILE SIZE']).toEqual("7141")
+        expect(rows[0]['FILE HASH']).toEqual("0xec856a2ae05cfcc8f103762d48352104fa8bd51cced6b1be9afba67c338c291d")
+        expect(rows[1]['FILE NAME']).toEqual("test-1.pdf")
+        expect(rows[1]['FILE SIZE']).toEqual("7111")
+        expect(rows[1]['FILE HASH']).toEqual("0xd0e9ebe4c7a35d94d4be2d9d3206c59a51b3c1e8c7c80922ac1ca3bacd29df6a")
+        expect(rows[2]['FILE NAME']).toEqual("test-2.pdf")
+        expect(rows[2]['FILE SIZE']).toEqual("7157")
+        expect(rows[2]['FILE HASH']).toEqual("0x451f94644093755a8b77676cf9453315a3984c69dbd04352d5f88238b452f7f0")
     })
 
     function checkKeys(row: Row, keys: readonly string[]) {
@@ -143,11 +173,11 @@ describe("CreateCsv - CSV output ", () => {
         }
     }
 
-    function checkFileColumns(row: Row, withRestricted?: { restricted: string}) {
+    function checkFileColumns(row: Row, withRestricted?: { restricted: string }) {
         const rowMap = row as RowMap;
-        expect(rowMap['FILE NAME']).toEqual('fileName.png');
+        expect(rowMap['FILE NAME']).toEqual('file0.png');
         expect(rowMap['FILE CONTENT TYPE']).toEqual('image/png');
-        expect(rowMap['FILE SIZE']).toEqual(123456);
+        expect(rowMap['FILE SIZE']).toEqual("123456");
         expect(rowMap['FILE HASH']).toEqual('0x0000000000000000000000000000000000000000000000000000000000000000');
         if (withRestricted) {
             expect(rowMap['RESTRICTED']).toEqual(withRestricted.restricted);

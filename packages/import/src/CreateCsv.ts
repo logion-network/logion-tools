@@ -11,9 +11,12 @@ import {
     isTokenType,
     isTokenCompatibleWith,
     TermsAndConditionsElementType,
+    HashAndSize,
 } from "@logion/client";
 import { Row } from "@fast-csv/format/build/src/types";
 import { isValidOrThrow } from "./TermsAndConditionsValidator.js";
+import fs from "fs";
+import { NodeFile } from "@logion/client-node";
 
 const TC_TYPES: TermsAndConditionsElementType[] = [ "logion_classification", "specific_license", "CC4.0" ];
 
@@ -24,11 +27,11 @@ export interface RowGenerationParams {
 }
 
 export interface CsvGenerationParams extends RowGenerationParams {
-    numOfRows: number,
+    numOfRows?: number,
 }
 
 export interface WithFile {
-    name: string,
+    dir: string | undefined,
     contentType: MimeType
     restricted: boolean,
 }
@@ -45,6 +48,12 @@ export interface WithTC {
     parameters: string,
 }
 
+interface File {
+    name: string;
+    mimeType: MimeType;
+    getHashAndSize(): Promise<HashAndSize>;
+}
+
 export class CreateCsv {
 
     constructor() {
@@ -59,7 +68,7 @@ export class CreateCsv {
 
     private createCommand(): Command {
         return new Command("create-csv")
-            .addOption(new Option("--num-of-rows <number>", "The number of rows").default(1))
+            .addOption(new Option("--num-of-rows <number>", "The number of rows"))
             .addOption(new Option("--with-files <mimeType>", "Add files with given mime type, for instance application/pdf or image/png").argParser((mimeType) => {
                 if (!isValidMime(mimeType)) {
                     throw new InvalidArgumentError("Invalid mime-type");
@@ -67,6 +76,7 @@ export class CreateCsv {
                 return mimeType;
             }))
             .addOption(new Option("--restricted [boolean]", "To enable file restricted delivery").default(false).preset(true))
+            .addOption(new Option("--dir <dirPath>", "The directory used as input for files"))
             .addOption(new Option("--with-tokens <tokenType>", "Add token with given type").argParser((tokenType => {
                 if (!isTokenType(tokenType)) {
                     throw new InvalidArgumentError("Invalid token type");
@@ -95,19 +105,25 @@ export class CreateCsv {
                     }
                 }
             })
+            .hook('preAction', (command) => {
+                const { numOfRows, dir } = command.opts();
+                if (numOfRows !== undefined && dir !== undefined) {
+                    throw new InvalidArgumentError(`Invalid --num-of-rows and --dir are mutually exclusive`)
+                }
+            })
             .action((options) => this.run(this.toParams(options)))
-            .description("To scaffold a CSV");
+            .description("To scaffold or create a CSV");
     }
 
     toParams(options: OptionValues): CsvGenerationParams {
         const params: CsvGenerationParams = {
-            numOfRows: options.numOfRows > 1 ? options.numOfRows : 1
+            numOfRows: options.numOfRows && options.numOfRows > 1 ? options.numOfRows : undefined
         };
 
         const mimeType = options.withFiles;
         if (mimeType) {
             params.withFile = {
-                name: "image",
+                dir: options.dir,
                 contentType: MimeType.from(mimeType),
                 restricted: options.restricted,
             };
@@ -135,21 +151,67 @@ export class CreateCsv {
     }
 
     async run(params: CsvGenerationParams) {
-        const { numOfRows } = params;
         const csvStream = csv.format({ headers: true });
         const fileStream = createWriteStream("items.csv");
         csvStream.pipe(fileStream);
-        let numOfColumns = 0;
-        for (let i = 0; i < numOfRows; ++i) {
-            const row = this.createRow(params, i);
-            numOfColumns = Object.keys(row).length;
-            csvStream.write(row);
-        }
+        await this.generateCsv(params, (row) => csvStream.write(row))
         csvStream.end();
+    }
+
+    async generateCsv(params: CsvGenerationParams, writer: (row: Row) => void) {
+        const { withFile } = params;
+        let numOfRows:number = params.numOfRows ? params.numOfRows : 1;
+        let numOfColumns = 0;
+        let filesNames: string[] | undefined = undefined;
+        if (withFile && withFile.dir) {
+            filesNames = this.readFileNames(withFile.dir, withFile.contentType);
+            numOfRows = filesNames.length;
+        }
+        for (let i = 0; i < numOfRows; ++i) {
+            let file: File | undefined = undefined;
+            if (withFile) {
+                file = filesNames ?
+                    await this.readFile(withFile, filesNames[i]) :
+                    this.scaffold(withFile.contentType, i)
+            }
+            const row = await this.createRow(params, file, i);
+            writer(row);
+            numOfColumns = Object.keys(row).length;
+        }
         console.log(`items.csv generated with ${ numOfRows } row(s) and ${ numOfColumns } columns`)
     }
 
-    createRow(params: RowGenerationParams, i = 0): Row {
+    readFileNames(dir: string, mimeType: MimeType): string[] {
+        return fs.readdirSync(dir).filter(file => {
+            const ext = file.substring(file.lastIndexOf(".") + 1).toLowerCase();
+            if (!mimeType.extensions.includes(ext)) {
+                console.warn(`Skipping file ${ file }: Invalid extension for ${ mimeType.mimeType }`);
+                return false;
+            } else {
+                return true;
+            }
+        }).sort();
+    }
+
+    async readFile(withFile: WithFile, name: string): Promise<File> {
+        const path = `${ withFile.dir }/${ name }`;
+        return new NodeFile(path, name, withFile.contentType);
+    }
+
+    scaffold(contentType: MimeType, i: number): File {
+        return {
+            name: `file${ i }.${ contentType.extensions[0] }`,
+            mimeType: contentType,
+            getHashAndSize(): Promise<HashAndSize> {
+                return Promise.resolve({
+                    size: 123456n,
+                    hash: Hash.fromHex("0x0000000000000000000000000000000000000000000000000000000000000000"),
+                })
+            }
+        }
+    }
+
+    async createRow(params: RowGenerationParams, file?: File, i = 0): Promise<Row> {
         const { withFile, withToken, withTC } = params;
         const itemId = withToken ?
             this.generateItemId(withToken.type, withToken.nonce, i) :
@@ -160,13 +222,14 @@ export class CreateCsv {
             ["TERMS_AND_CONDITIONS TYPE"]: withTC ? withTC.type : "none",
             ["TERMS_AND_CONDITIONS PARAMETERS"]: withTC ? withTC.parameters : "none",
         };
-        if (withFile) {
+        if (file) {
+            const hashAndSize = await file.getHashAndSize();
             row = {
                 ...row,
-                ["FILE NAME"]: `${ withFile.name }.${ withFile.contentType.extensions[0] }`,
-                ["FILE CONTENT TYPE"]: withFile.contentType.mimeType,
-                ["FILE SIZE"]: 123456,
-                ["FILE HASH"]: "0x0000000000000000000000000000000000000000000000000000000000000000",
+                ["FILE NAME"]: `${ file.name }`,
+                ["FILE CONTENT TYPE"]: file.mimeType.mimeType,
+                ["FILE SIZE"]: `${ hashAndSize.size }`,
+                ["FILE HASH"]: `${ hashAndSize.hash.toHex() }`,
             }
         }
         if (withFile && withToken) {
