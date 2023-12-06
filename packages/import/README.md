@@ -16,4 +16,16 @@ Run previously installed :
 Run without installation
 `npx @logion/import`
 
+## Develop
+
+```shell
+yarn build
+
+# Test CSV validation
+node dist/index validate-csv samples/*
+
+# Test CSV creation
+node dist/index create-csv --with-files image/png --with-tokens owner
+```
+
 

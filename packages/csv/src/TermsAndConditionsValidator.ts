@@ -1,9 +1,11 @@
 import { UUID } from "@logion/node-api";
 import { LogionClassification, TermsAndConditionsElementType, CreativeCommons } from "@logion/client";
 
-export function isValidOrThrow(type: TermsAndConditionsElementType, tcParametersFromCsv: string) {
+export function isValidOrThrow(type: TermsAndConditionsElementType | 'none', tcParametersFromCsv: string) {
 
-    if (type === "logion_classification") {
+    if (type === "none") {
+        return
+    } else if (type === "logion_classification") {
         LogionClassification.validateDetails(tcParametersFromCsv);
     } else if (type === "CC4.0") {
         CreativeCommons.validateDetails(tcParametersFromCsv);
