@@ -152,22 +152,41 @@ __metadata:
   linkType: hard
 
 "@logion/client@npm:^0.36.0-1":
-  version: 0.36.0-2
-  resolution: "@logion/client@npm:0.36.0-2"
+  version: 0.36.0-6
+  resolution: "@logion/client@npm:0.36.0-6"
   dependencies:
     "@logion/node-api": ^0.26.0
     axios: ^0.27.2
     luxon: ^3.0.1
     mime-db: ^1.52.0
-  checksum: b4cf830dcdf842a073ff49663e5e71176d3fd897759fd2c3ca534066aa670fd725b0baa53700b78507f50299c3c9b9c2ec16efdf1b772ca2564e9630be704e60
+  checksum: 046d8e4eed1a02c476b082279b9489e3fbc58ddabb2499b5429017aba6f351120203af364c0c131877245e387efabde5667120609a9c8cec35337caeee997104
   languageName: node
   linkType: hard
+
+"@logion/csv@workspace:^, @logion/csv@workspace:packages/csv":
+  version: 0.0.0-use.local
+  resolution: "@logion/csv@workspace:packages/csv"
+  dependencies:
+    "@logion/node-api": ^0.26.0
+    "@tsconfig/node18": ^1.0.1
+    "@types/jasmine": ^4.0.3
+    "@types/node": ^18.6.1
+    "@typescript-eslint/eslint-plugin": ^6.9.1
+    "@typescript-eslint/parser": ^6.9.1
+    eslint: ^8.20.0
+    jasmine: ^4.3.0
+    jasmine-spec-reporter: ^7.0.0
+    ts-node: ^10.9.1
+    typescript: ^4.9.5
+  languageName: unknown
+  linkType: soft
 
 "@logion/import@workspace:packages/import":
   version: 0.0.0-use.local
   resolution: "@logion/import@workspace:packages/import"
   dependencies:
     "@logion/client-node": ^0.2.1-1
+    "@logion/csv": "workspace:^"
     "@tsconfig/node18": ^1.0.1
     "@types/figlet": ^1.5.8
     "@types/jasmine": ^4.0.3
@@ -175,6 +194,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^6.9.1
     "@typescript-eslint/parser": ^6.9.1
     commander: ^11.1.0
+    csv-parser: ^3.0.0
     eslint: ^8.20.0
     fast-csv: ^4.3.6
     figlet: ^1.7.0
@@ -1123,6 +1143,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"csv-parser@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "csv-parser@npm:3.0.0"
+  dependencies:
+    minimist: ^1.2.0
+  bin:
+    csv-parser: bin/csv-parser
+  checksum: adc9d67d9f185249825570778c24d13004625301655330f6b735a052b9fdfbe1a239a014afb1f89939e0626ee573718f71f9f14164db7c17e4bcb2f38d6a162b
+  languageName: node
+  linkType: hard
+
 "data-uri-to-buffer@npm:^4.0.0":
   version: 4.0.1
   resolution: "data-uri-to-buffer@npm:4.0.1"
@@ -1832,6 +1863,13 @@ __metadata:
   dependencies:
     brace-expansion: ^1.1.7
   checksum: c154e566406683e7bcb746e000b84d74465b3a832c45d59912b9b55cd50dee66e5c4b1e5566dba26154040e51672f9aa450a9aef0c97cfc7336b78b7afb9540a
+  languageName: node
+  linkType: hard
+
+"minimist@npm:^1.2.0":
+  version: 1.2.8
+  resolution: "minimist@npm:1.2.8"
+  checksum: 75a6d645fb122dad29c06a7597bddea977258957ed88d7a6df59b5cd3fe4a527e253e9bbf2e783e4b73657f9098b96a5fe96ab8a113655d4109108577ecf85b0
   languageName: node
   linkType: hard
 

@@ -12,13 +12,12 @@ import {
     isTokenCompatibleWith,
     TermsAndConditionsElementType,
     HashAndSize,
+    TERMS_AND_CONDITIONS_TYPES,
 } from "@logion/client";
 import { Row } from "@fast-csv/format/build/src/types";
-import { isValidOrThrow } from "./TermsAndConditionsValidator.js";
+import { isValidOrThrow } from "@logion/csv";
 import fs from "fs";
 import { NodeFile } from "@logion/client-node";
-
-const TC_TYPES: TermsAndConditionsElementType[] = [ "logion_classification", "specific_license", "CC4.0" ];
 
 export interface RowGenerationParams {
     withFile?: WithFile,
@@ -89,7 +88,7 @@ export class CreateCsv {
             )
             .addOption(new Option("--nonce <nonce>", "The nonce used at contract instantiation.").default("", "empty string"))
             .addOption(new Option("--issuance <issuance>", "Tokens issuance.").default(1))
-            .addOption(new Option("--tc-type <type>", "Terms and Conditions type.").choices(TC_TYPES))
+            .addOption(new Option("--tc-type <type>", "Terms and Conditions type.").choices(TERMS_AND_CONDITIONS_TYPES))
             .addOption(new Option("--tc-details <details>", "Terms and Conditions details."))
             .hook('preAction', (command) => {
                 const { tcType, tcDetails } = command.opts();
