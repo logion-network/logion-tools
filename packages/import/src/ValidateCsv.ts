@@ -27,8 +27,7 @@ export class ValidateCsv {
         fs.lstat(csvFile, (err, stats) => {
             if (err) {
                 console.error(err)
-            }
-            if (stats.isFile()) {
+            } else if (stats && stats.isFile()) {
                 const stream = createReadStream(csvFile);
                 this.readItemsCsv(stream).then(result => {
                     if ("fullyValidated" in result) {
