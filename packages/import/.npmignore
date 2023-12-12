@@ -5,3 +5,4 @@ tsconfig*.json
 typedoc.json
 .eslintrc.json
 *.csv
+/samples
