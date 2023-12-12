@@ -141,25 +141,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@logion/client-node@npm:^0.2.1-1":
-  version: 0.2.1-1
-  resolution: "@logion/client-node@npm:0.2.1-1"
+"@logion/client-node@npm:^0.3.1-2":
+  version: 0.3.1-2
+  resolution: "@logion/client-node@npm:0.3.1-2"
   dependencies:
-    "@logion/client": ^0.36.0-1
+    "@logion/client": ^0.36.1-1
     form-data: ^4.0.0
-  checksum: 2eb60a9fe8e52409f3b4496038fc41c8acc71c5f91a72e6cd21854612415533f5acf543235a2722ff1894340787139874a7b084c60aeffbcb1dd02cf3e17454c
+  checksum: d540dbaba0461fc29b922ce1f8aa23314fde117f27eddb7ae01a579ac47b60b31bc0a93990bbff5efc784682d1db256f88bf2e6d82042c0c2c503660e1991742
   languageName: node
   linkType: hard
 
-"@logion/client@npm:^0.36.0-1":
-  version: 0.36.0-6
-  resolution: "@logion/client@npm:0.36.0-6"
+"@logion/client@npm:^0.36.1-1":
+  version: 0.36.1-1
+  resolution: "@logion/client@npm:0.36.1-1"
   dependencies:
     "@logion/node-api": ^0.26.0
     axios: ^0.27.2
     luxon: ^3.0.1
     mime-db: ^1.52.0
-  checksum: 046d8e4eed1a02c476b082279b9489e3fbc58ddabb2499b5429017aba6f351120203af364c0c131877245e387efabde5667120609a9c8cec35337caeee997104
+  checksum: 9c6b37bf35b4f6e67916ce97c5938db4fe770ab0fef69e72bd06dbd0a95e832359a3f59f191ab67e8fbf5a2369ade5f5b05d2dc466e1a95034ca3b7679b35623
   languageName: node
   linkType: hard
 
@@ -185,7 +185,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@logion/import@workspace:packages/import"
   dependencies:
-    "@logion/client-node": ^0.2.1-1
+    "@logion/client-node": ^0.3.1-2
     "@logion/csv": "workspace:^"
     "@tsconfig/node18": ^1.0.1
     "@types/figlet": ^1.5.8
