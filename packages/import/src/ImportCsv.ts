@@ -1,9 +1,9 @@
 import { Command, Option, InvalidArgumentError } from "commander";
 import { ValidateCsv } from "./ValidateCsv.js";
-import { CsvItem, toItem } from "@logion/csv";
+import { CsvItem, toItem, CsvItemWithFile } from "@logion/csv";
 import { UUID, Hash } from "@logion/node-api";
-import { Environment, EnvironmentString, FullSigner, KeyringSigner, ClosedCollectionLoc, Signer } from "@logion/client";
-import { newLogionClient } from "@logion/client-node";
+import { Environment, EnvironmentString, FullSigner, HashOrContent, KeyringSigner, ClosedCollectionLoc, Signer, MimeType } from "@logion/client";
+import { newLogionClient, NodeFile } from "@logion/client-node";
 import { Keyring } from "@polkadot/api";
 import fs from "fs/promises";
 
@@ -73,8 +73,9 @@ export class ImportCsv {
             }
         });
         const collectionLoc = locsState.findById(csvImportParams.loc) as ClosedCollectionLoc;
-        const promises = csvFiles.map((csvFile: string) => this.importCsv(collectionLoc, csvFile, signer));
-        await Promise.all(promises);
+        for (const csvFile of csvFiles) {
+            await this.importCsv(collectionLoc, csvFile, signer, csvImportParams.dir)
+        }
     }
 
     private async buildSigner(seedPath: string): Promise<{ signer: FullSigner, address: string }> {
@@ -85,23 +86,23 @@ export class ImportCsv {
         return { signer: new KeyringSigner(keyring), address };
     }
 
-    private async importCsv(collectionLoc: ClosedCollectionLoc, csvFile: string, signer: Signer): Promise<void> {
+    private async importCsv(collectionLoc: ClosedCollectionLoc, csvFile: string, signer: Signer, dir: string | undefined): Promise<void> {
         const validated = await this.validateCsv.validateCsv(csvFile)
         if (validated) {
-            await this.importItems(collectionLoc, validated.items, signer);
+            await this.importItems(collectionLoc, validated.items, signer, dir);
             console.log(`${ csvFile } imported`)
         } else {
             console.log(`${ csvFile } skipped`)
         }
     }
 
-    private async importItems(collectionLoc: ClosedCollectionLoc, items: CsvItem[], signer: Signer): Promise<void> {
+    private async importItems(collectionLoc: ClosedCollectionLoc, items: CsvItem[], signer: Signer, dir: string | undefined): Promise<void> {
         for (const item of items) {
-            await this.importItem(collectionLoc, item, signer)
+            await this.importItem(collectionLoc, item, signer, dir)
         }
     }
 
-    private async importItem(collection: ClosedCollectionLoc, csvItem: CsvItem, signer: Signer): Promise<void> {
+    private async importItem(collection: ClosedCollectionLoc, csvItem: CsvItem, signer: Signer, dir: string | undefined): Promise<void> {
         const collectionAcceptsUpload = collection.data().collectionCanUpload !== undefined && collection.data().collectionCanUpload === true;
         const item = toItem(csvItem, collectionAcceptsUpload);
         const existingItem = await collection.getCollectionItem({ itemId: item.id as Hash });
@@ -120,6 +121,22 @@ export class ImportCsv {
                 specificLicenses: item.specificLicense ? [ item.specificLicense ] : undefined,
                 creativeCommons: item.creativeCommons,
             })
+        }
+        if (item.upload && dir) {
+            await this.uploadItemFile(collection, item.id!, csvItem as CsvItemWithFile, dir);
+        }
+    }
+
+    private async uploadItemFile(collection: ClosedCollectionLoc, itemId: Hash, csvItem: CsvItemWithFile, dir: string): Promise<void> {
+        const hashOrContent = HashOrContent.fromContent(new NodeFile(`${ dir }/${ csvItem.fileName }`, csvItem.fileName, MimeType.from(csvItem.fileContentType)));
+        await hashOrContent.finalize();
+        if (hashOrContent.contentHash.equalTo(csvItem.fileHash)) {
+            await collection.uploadCollectionItemFile({
+                itemId,
+                itemFile: hashOrContent
+            })
+        } else {
+            console.warn(`File not uploaded due to Hash mismatch: from CSV: ${ csvItem.fileHash.toHex() } vs calculated: ${ hashOrContent.contentHash.toHex() }`)
         }
     }
 }
