@@ -58,7 +58,6 @@ export class ImportCsv {
                 .argParser(parseInt)
             )
             .addOption(new Option("--local", "Connect to local node (--env value ignored)")
-                .hideHelp() // Reserved to developer
                 .implies({ env: "DEV" })
             )
             .argument("<csvFiles...>", "the csv files to import")
@@ -130,7 +129,7 @@ export class ImportCsv {
         const payload: AddCollectionItemParams[] = [];
         const items = csvItems.map(csvItem => toItem(csvItem, collectionAcceptsUpload));
 
-        for (let i = 0; i < items.length; i++ ) {
+        for (let i = 0; i < items.length; i++) {
             const item = items[i];
             const existingItem = await collection.getCollectionItem({ itemId: item.id as Hash });
             if (existingItem) {
@@ -172,7 +171,7 @@ export class ImportCsv {
         }
 
         if (dir) {
-            for (let i = 0; i < items.length; i++ ) {
+            for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 if (item.upload) {
                     const csvItem = csvItems[i] as CsvItemWithFile;

@@ -73,7 +73,7 @@ describe("ImportCsv - importItems", () => {
 
     it("succeeds to add non-existing items without file", async () => {
         const collectionLoc = mockCollectionLoc({ itemsExists: false, collectionCanUpload: false });
-        await importCsv.importItems(collectionLoc.object(), csvItemsWithoutFile, signer, csvImportParams)
+        await importCsv.importItems(collectionLoc.object(), csvItemsWithoutFile, signer, csvImportParams);
         collectionLoc.verify(instance => instance.addCollectionItems(It.Is<BlockchainBatchSubmission<AddCollectionItemParams>>(params =>
                 params.payload[0].itemId.equalTo(Hash.of("1")) &&
                 params.payload[0].itemDescription === "some-description" &&
@@ -100,7 +100,7 @@ describe("ImportCsv - importItems", () => {
             fileHash: hashOrContent[index].contentHash,
             fileSize: hashOrContent[index].size.toString(),
         }))
-        await importCsv.importItems(collectionLoc.object(), csvItems, signer, csvImportParams)
+        await importCsv.importItems(collectionLoc.object(), csvItems, signer, csvImportParams);
         collectionLoc.verify(instance => instance.addCollectionItems(It.Is<BlockchainBatchSubmission<AddCollectionItemParams>>(params =>
                 params.payload[0].itemId.equalTo(Hash.of("1")) &&
                 params.payload[0].itemDescription === "some-description"
@@ -114,7 +114,7 @@ describe("ImportCsv - importItems", () => {
 
     it("skips existing items addition", async () => {
         const collectionLoc = mockCollectionLoc({ itemsExists: true, collectionCanUpload: false });
-        await importCsv.importItems(collectionLoc.object(), csvItemsWithoutFile, signer, csvImportParams)
+        await importCsv.importItems(collectionLoc.object(), csvItemsWithoutFile, signer, csvImportParams);
         collectionLoc.verify(instance => instance.addCollectionItems(It.IsAny<BlockchainBatchSubmission<AddCollectionItemParams>>()),
             Times.Never()
         );
@@ -136,7 +136,7 @@ describe("ImportCsv - importItems", () => {
             fileHash: hashOrContent[index].contentHash,
             fileSize: hashOrContent[index].size.toString(),
         }))
-        await importCsv.importItems(collectionLoc.object(), csvItems, signer, csvImportParams)
+        await importCsv.importItems(collectionLoc.object(), csvItems, signer, csvImportParams);
         collectionLoc.verify(instance => instance.addCollectionItems(It.IsAny<BlockchainBatchSubmission<AddCollectionItemParams>>()),
             Times.Never()
         );
@@ -156,7 +156,7 @@ function mockCollectionLoc(params: { itemsExists: boolean, collectionCanUpload: 
     if (itemsExists) {
         collectionItem.setup(instance => instance.files.find(It.IsAny())).returns(
             Promise.resolve({ uploaded: false })
-        )
+        );
     }
     collectionLoc.setup(instance => instance.data()).returns({
         collectionCanUpload
