@@ -2,16 +2,20 @@ import { Command, Option, InvalidArgumentError } from "commander";
 import { ValidateCsv } from "./ValidateCsv.js";
 import { CsvItem, toItem, CsvItemWithFile } from "@logion/csv";
 import { UUID, Hash } from "@logion/node-api";
-import { Environment, EnvironmentString, FullSigner, HashOrContent, KeyringSigner, ClosedCollectionLoc, Signer, MimeType } from "@logion/client";
-import { newLogionClient, NodeFile } from "@logion/client-node";
+import { Environment, EnvironmentString, FullSigner, HashOrContent, KeyringSigner, ClosedCollectionLoc, Signer, MimeType, LogionClient } from "@logion/client";
+import { newLogionClient, NodeFile, NodeAxiosFileUploader } from "@logion/client-node";
 import { Keyring } from "@polkadot/api";
 import fs from "fs/promises";
+import { AddCollectionItemParams } from "@logion/client/dist/LocClient.js";
+import { BatchMaker } from "@logion/csv/dist/BatchMaker.js";
 
 export interface CsvImportParams {
     env: EnvironmentString,
     loc: UUID,
-    dir: string,
+    dir: string | undefined,
     suri: string,
+    batchSize: number,
+    local: boolean,
 }
 
 export class ImportCsv {
@@ -49,6 +53,13 @@ export class ImportCsv {
                 .makeOptionMandatory()
             )
             .addOption(new Option("--dir <dirPath>", "The directory used as input for files"))
+            .addOption(new Option("--batch-size <batchSize>", "The size of one batch (i.e. numbers of items in one extrinsic")
+                .default(10)
+                .argParser(parseInt)
+            )
+            .addOption(new Option("--local", "Connect to local node (--env value ignored)")
+                .implies({ env: "DEV" })
+            )
             .argument("<csvFiles...>", "the csv files to import")
             .action((csvFiles, csvImportParams) => this.importCsvFiles(csvImportParams, csvFiles))
             .description("To import one or more CSV file(s) into a Collection LOC")
@@ -56,7 +67,13 @@ export class ImportCsv {
 
     async importCsvFiles(csvImportParams: CsvImportParams, csvFiles: string []): Promise<void> {
 
-        const anonymousClient = await newLogionClient(csvImportParams.env);
+        const anonymousClient = csvImportParams.local ?
+            await LogionClient.create({
+                buildFileUploader: () => new NodeAxiosFileUploader(),
+                directoryEndpoint: "http://localhost:8090",
+                rpcEndpoints: [ "ws://127.0.0.1:9944" ],
+            }) :
+            await newLogionClient(csvImportParams.env);
 
         console.log("Logion Classification %s", anonymousClient.config.logionClassificationLoc);
         console.log("Creative Commons %s", anonymousClient.config.creativeCommonsLoc);
@@ -74,8 +91,9 @@ export class ImportCsv {
         });
         const collectionLoc = locsState.findById(csvImportParams.loc) as ClosedCollectionLoc;
         for (const csvFile of csvFiles) {
-            await this.importCsv(collectionLoc, csvFile, signer, csvImportParams.dir)
+            await this.importCsv(collectionLoc, csvFile, signer, csvImportParams)
         }
+        return anonymousClient.disconnect()
     }
 
     private async buildSigner(seedPath: string): Promise<{ signer: FullSigner, address: string }> {
@@ -86,44 +104,81 @@ export class ImportCsv {
         return { signer: new KeyringSigner(keyring), address };
     }
 
-    private async importCsv(collectionLoc: ClosedCollectionLoc, csvFile: string, signer: Signer, dir: string | undefined): Promise<void> {
+    private async importCsv(collectionLoc: ClosedCollectionLoc, csvFile: string, signer: Signer, csvImportParams: CsvImportParams): Promise<void> {
         const validated = await this.validateCsv.validateCsv(csvFile)
         if (validated) {
-            await this.importItems(collectionLoc, validated.items, signer, dir);
+            await this.importItems(collectionLoc, validated.items, signer, csvImportParams);
             console.log(`${ csvFile } imported`)
         } else {
             console.log(`${ csvFile } skipped`)
         }
     }
 
-    private async importItems(collectionLoc: ClosedCollectionLoc, items: CsvItem[], signer: Signer, dir: string | undefined): Promise<void> {
-        for (const item of items) {
-            await this.importItem(collectionLoc, item, signer, dir)
+    async importItems(collectionLoc: ClosedCollectionLoc, csvItems: CsvItem[], signer: Signer, csvImportParams: CsvImportParams): Promise<void> {
+        const { batchSize, dir } = csvImportParams
+        const batchMaker = new BatchMaker(csvItems, batchSize);
+        for (let i = 0; i < batchMaker.numOfBatches ; i++) {
+            const batch = batchMaker.getBatch(i);
+            console.log(`Importing batch ${ i + 1 } / ${ batchMaker.numOfBatches } (${ batch.length } rows)`)
+            await this.importItemBatch(collectionLoc, batch, signer, dir)
         }
     }
 
-    private async importItem(collection: ClosedCollectionLoc, csvItem: CsvItem, signer: Signer, dir: string | undefined): Promise<void> {
+    private async importItemBatch(collection: ClosedCollectionLoc, csvItems: CsvItem[], signer: Signer, dir: string | undefined): Promise<void> {
         const collectionAcceptsUpload = collection.data().collectionCanUpload !== undefined && collection.data().collectionCanUpload === true;
-        const item = toItem(csvItem, collectionAcceptsUpload);
-        const existingItem = await collection.getCollectionItem({ itemId: item.id as Hash });
-        if (existingItem) {
-            console.warn(`Skipping existing item ${ item.displayId }`)
-        } else {
-            console.log(`Importing new item ${ item.displayId }`)
-            await collection.addCollectionItem({
-                signer: signer!,
-                itemId: item.id!,
-                itemDescription: item.description,
-                itemFiles: item.files,
-                restrictedDelivery: item.restrictedDelivery,
-                itemToken: item.token,
-                logionClassification: item.logionClassification,
-                specificLicenses: item.specificLicense ? [ item.specificLicense ] : undefined,
-                creativeCommons: item.creativeCommons,
-            })
+        const payload: AddCollectionItemParams[] = [];
+        const items = csvItems.map(csvItem => toItem(csvItem, collectionAcceptsUpload));
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const existingItem = await collection.getCollectionItem({ itemId: item.id as Hash });
+            if (existingItem) {
+                console.warn(`Skipping existing item ${ item.displayId }`)
+                if (item.upload) {
+                    const csvItem = csvItems[i] as CsvItemWithFile;
+                    const file = existingItem.files.find(file => file.hash.equalTo(csvItem.fileHash));
+                    if (file) {
+                        if (file.uploaded) {
+                            items[i] = {
+                                ...item,
+                                upload: false
+                            }
+                        } else {
+                            console.warn(`File not uploaded yet.`)
+                        }
+                    } else {
+                        throw Error("Item exists without file entry")
+                    }
+                }
+
+            } else {
+                console.log(`Importing new item ${ item.displayId }`)
+                payload.push( {
+                    itemId: item.id!,
+                    itemDescription: item.description,
+                    itemFiles: item.files,
+                    restrictedDelivery: item.restrictedDelivery,
+                    itemToken: item.token,
+                    logionClassification: item.logionClassification,
+                    specificLicenses: item.specificLicense ? [ item.specificLicense ] : undefined,
+                    creativeCommons: item.creativeCommons,
+                });
+            }
         }
-        if (item.upload && dir) {
-            await this.uploadItemFile(collection, item.id!, csvItem as CsvItemWithFile, dir);
+
+        if (payload.length > 0) {
+            await collection.addCollectionItems({ signer, payload });
+        }
+
+        if (dir) {
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.upload) {
+                    const csvItem = csvItems[i] as CsvItemWithFile;
+                    console.log(`Uploading ${ csvItem.fileName } linked to ${ item.displayId }`)
+                    await this.uploadItemFile(collection, item.id!, csvItem, dir);
+                }
+            }
         }
     }
 

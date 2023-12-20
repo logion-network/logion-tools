@@ -141,25 +141,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@logion/client-node@npm:^0.3.1-2":
-  version: 0.3.1-2
-  resolution: "@logion/client-node@npm:0.3.1-2"
+"@logion/client-node@npm:^0.3.1-3":
+  version: 0.3.1-3
+  resolution: "@logion/client-node@npm:0.3.1-3"
   dependencies:
-    "@logion/client": ^0.36.1-1
+    "@logion/client": ^0.37.0-1
     form-data: ^4.0.0
-  checksum: d540dbaba0461fc29b922ce1f8aa23314fde117f27eddb7ae01a579ac47b60b31bc0a93990bbff5efc784682d1db256f88bf2e6d82042c0c2c503660e1991742
+  checksum: f0abd04323c486dd2d39f377314e4d51b1c0d253b02e0aac7672e0301b345f203c2a1499e191070eeee0d3c1e77a5bc18ae4a1dd82318d87b6360f3a013fbf4c
   languageName: node
   linkType: hard
 
-"@logion/client@npm:^0.36.1-1":
-  version: 0.36.1-1
-  resolution: "@logion/client@npm:0.36.1-1"
+"@logion/client@npm:^0.37.0-1":
+  version: 0.37.0-1
+  resolution: "@logion/client@npm:0.37.0-1"
   dependencies:
-    "@logion/node-api": ^0.26.0
+    "@logion/node-api": ^0.27.0-2
     axios: ^0.27.2
     luxon: ^3.0.1
     mime-db: ^1.52.0
-  checksum: 9c6b37bf35b4f6e67916ce97c5938db4fe770ab0fef69e72bd06dbd0a95e832359a3f59f191ab67e8fbf5a2369ade5f5b05d2dc466e1a95034ca3b7679b35623
+  checksum: e6e567ed8d291f87ca98b2e779ff2bbef446143d7479d9426bc7d30f6adee7af4a1a3db84f36377f375ba8d06747a0f09769dd221817afcbf66427e00001c852
   languageName: node
   linkType: hard
 
@@ -167,7 +167,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@logion/csv@workspace:packages/csv"
   dependencies:
-    "@logion/node-api": ^0.26.0
+    "@logion/node-api": ^0.27.0-2
     "@tsconfig/node18": ^1.0.1
     "@types/jasmine": ^4.0.3
     "@types/node": ^18.6.1
@@ -185,7 +185,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@logion/import@workspace:packages/import"
   dependencies:
-    "@logion/client-node": ^0.3.1-2
+    "@logion/client-node": ^0.3.1-3
     "@logion/csv": "workspace:^"
     "@tsconfig/node18": ^1.0.1
     "@types/figlet": ^1.5.8
@@ -200,6 +200,7 @@ __metadata:
     figlet: ^1.7.0
     jasmine: ^4.3.0
     jasmine-spec-reporter: ^7.0.0
+    moq.ts: ^10.0.8
     ts-node: ^10.9.1
     typescript: ^4.9.5
   bin:
@@ -207,9 +208,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@logion/node-api@npm:^0.26.0":
-  version: 0.26.0
-  resolution: "@logion/node-api@npm:0.26.0"
+"@logion/node-api@npm:^0.27.0-2":
+  version: 0.27.0-2
+  resolution: "@logion/node-api@npm:0.27.0-2"
   dependencies:
     "@polkadot/api": ^10.10.1
     "@polkadot/util": ^12.5.1
@@ -217,7 +218,7 @@ __metadata:
     "@types/uuid": ^9.0.2
     fast-sha256: ^1.3.0
     uuid: ^9.0.0
-  checksum: 4024cf6911e20cf345d9e506ce7dd33e2b29340adce8be384f26df3d4e4ebb34e9b42ddc1cfe3d57e9585bb735749d26d9eb789ceacba6257e38958d0fe47c83
+  checksum: 37765ae5ee9f97c515886d944e371153de395a883c7af3ba1386e9eee87ede8293b5ceaaea36ed7f5cc191adf5cea5c94e18d3b953504848ee2791c3f7041782
   languageName: node
   linkType: hard
 
@@ -1880,6 +1881,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"moq.ts@npm:^10.0.8":
+  version: 10.1.0
+  resolution: "moq.ts@npm:10.1.0"
+  dependencies:
+    tslib: "*"
+  checksum: 7598aae4f69fd1a3f58cb22613fafbd3b978af0f15bf93790d55b966f6710172631da9540ada454704ac2a47c214d1d5d095d988d26674573d70cf1c20a4b429
+  languageName: node
+  linkType: hard
+
 "ms@npm:2.1.2":
   version: 2.1.2
   resolution: "ms@npm:2.1.2"
@@ -2216,7 +2226,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.1.0, tslib@npm:^2.6.2":
+"tslib@npm:*, tslib@npm:^2.1.0, tslib@npm:^2.6.2":
   version: 2.6.2
   resolution: "tslib@npm:2.6.2"
   checksum: 329ea56123005922f39642318e3d1f0f8265d1e7fcb92c633e0809521da75eeaca28d2cf96d7248229deb40e5c19adf408259f4b9640afd20d13aecc1430f3ad
