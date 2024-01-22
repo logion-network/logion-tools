@@ -141,25 +141,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@logion/client-node@npm:^0.3.1-3":
-  version: 0.3.1-3
-  resolution: "@logion/client-node@npm:0.3.1-3"
+"@logion/client-node@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "@logion/client-node@npm:0.3.2"
   dependencies:
-    "@logion/client": ^0.37.0-1
+    "@logion/client": ^0.38.0
     form-data: ^4.0.0
-  checksum: f0abd04323c486dd2d39f377314e4d51b1c0d253b02e0aac7672e0301b345f203c2a1499e191070eeee0d3c1e77a5bc18ae4a1dd82318d87b6360f3a013fbf4c
+  checksum: f944f860f0d65de16a50b8da91c4b3b7f30aa6479c39d3fd821c08113dcb0ff5c8171fb5f09d4b8e172c29e7d5b1004caa6c21236f1890be2c59e3e0637ed17b
   languageName: node
   linkType: hard
 
-"@logion/client@npm:^0.37.0-1":
-  version: 0.37.0-1
-  resolution: "@logion/client@npm:0.37.0-1"
+"@logion/client@npm:^0.38.0":
+  version: 0.38.0
+  resolution: "@logion/client@npm:0.38.0"
   dependencies:
-    "@logion/node-api": ^0.27.0-2
+    "@logion/node-api": ^0.28.0
     axios: ^0.27.2
     luxon: ^3.0.1
     mime-db: ^1.52.0
-  checksum: e6e567ed8d291f87ca98b2e779ff2bbef446143d7479d9426bc7d30f6adee7af4a1a3db84f36377f375ba8d06747a0f09769dd221817afcbf66427e00001c852
+  checksum: b92f8d41759dbfb10c9d0a93dfdfe50def732828bbda86921ba285949424e7de0b38e4970d20305dbda1b318537760a90727278520dc63f3e070ccbe7e33171e
   languageName: node
   linkType: hard
 
@@ -167,7 +167,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@logion/csv@workspace:packages/csv"
   dependencies:
-    "@logion/node-api": ^0.27.0-2
+    "@logion/node-api": ^0.28.0
     "@tsconfig/node18": ^1.0.1
     "@types/jasmine": ^4.0.3
     "@types/node": ^18.6.1
@@ -185,7 +185,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@logion/import@workspace:packages/import"
   dependencies:
-    "@logion/client-node": ^0.3.1-3
+    "@logion/client-node": ^0.3.2
     "@logion/csv": "workspace:^"
     "@tsconfig/node18": ^1.0.1
     "@types/figlet": ^1.5.8
@@ -208,9 +208,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@logion/node-api@npm:^0.27.0-2":
-  version: 0.27.0-2
-  resolution: "@logion/node-api@npm:0.27.0-2"
+"@logion/node-api@npm:^0.28.0":
+  version: 0.28.0
+  resolution: "@logion/node-api@npm:0.28.0"
   dependencies:
     "@polkadot/api": ^10.10.1
     "@polkadot/util": ^12.5.1
@@ -218,7 +218,7 @@ __metadata:
     "@types/uuid": ^9.0.2
     fast-sha256: ^1.3.0
     uuid: ^9.0.0
-  checksum: 37765ae5ee9f97c515886d944e371153de395a883c7af3ba1386e9eee87ede8293b5ceaaea36ed7f5cc191adf5cea5c94e18d3b953504848ee2791c3f7041782
+  checksum: 026747b75a98d5115d8eb9298be5930b45f99b0462dba436535350c0dc7f710310271fc35b3fca939b09a1921b33032672bc4557320029c0a466a4d6dc2ffef9
   languageName: node
   linkType: hard
 
