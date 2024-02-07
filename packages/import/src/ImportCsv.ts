@@ -99,7 +99,7 @@ export class ImportCsv {
     private async buildSigner(seedPath: string): Promise<{ signer: FullSigner, address: string }> {
         const seed = await fs.readFile(seedPath, { encoding: 'utf8' });
         const keyring = new Keyring({ type: 'sr25519' });
-        const { address } = keyring.addFromUri(seed);
+        const { address } = keyring.addFromUri(seed.trim());
         console.log("Polkadot address: %s", address);
         return { signer: new KeyringSigner(keyring), address };
     }
