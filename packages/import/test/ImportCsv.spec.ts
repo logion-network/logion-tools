@@ -2,12 +2,19 @@ import { ParseOptions, Command } from "commander";
 import { ImportCsv, CsvImportParams } from "../src/ImportCsv.js";
 import { Mock, It, Times } from "moq.ts";
 import { ValidateCsv } from "../src/ValidateCsv.js";
-import { ClosedCollectionLoc, Signer, LocData, HashOrContent, MimeType } from "@logion/client";
+import {
+    ClosedCollectionLoc,
+    Signer,
+    LocData,
+    HashOrContent,
+    MimeType,
+    BlockchainBatchSubmission,
+    AddCollectionItemParams,
+    UploadCollectionItemFileParams,
+    CollectionItem as CollectionItemClass
+} from "@logion/client";
 import { UUID, Hash } from "@logion/node-api";
 import { CsvItemWithoutFile, CsvItemWithFile } from "@logion/csv";
-import { BlockchainBatchSubmission, AddCollectionItemParams } from "@logion/client/dist/LocClient.js";
-import { UploadCollectionItemFileParams } from "@logion/client/dist/Loc.js";
-import { CollectionItem as CollectionItemClass } from "@logion/client/dist/CollectionItem.js";
 import { NodeFile } from "@logion/client-node";
 
 describe("ImportCsv - command", () => {
@@ -72,7 +79,7 @@ describe("ImportCsv - importItems", () => {
     })
 
     it("succeeds to add non-existing items without file", async () => {
-        const collectionLoc = mockCollectionLoc({ itemsExists: false, collectionCanUpload: false });
+        const collectionLoc = mockCollectionLoc({ itemsExists: false, canUpload: false });
         await importCsv.importItems(collectionLoc.object(), csvItemsWithoutFile, signer, csvImportParams);
         collectionLoc.verify(instance => instance.addCollectionItems(It.Is<BlockchainBatchSubmission<AddCollectionItemParams>>(params =>
                 params.payload[0].itemId.equalTo(Hash.of("1")) &&
@@ -88,7 +95,7 @@ describe("ImportCsv - importItems", () => {
     })
 
     it("succeeds to add non-existing items with file", async () => {
-        const collectionLoc = mockCollectionLoc({ itemsExists: false, collectionCanUpload: true });
+        const collectionLoc = mockCollectionLoc({ itemsExists: false, canUpload: true });
         const hashOrContent = [
             await getFile(csvImportParams.dir!, "test-0.pdf"),
             await getFile(csvImportParams.dir!, "test-1.pdf"),
@@ -113,7 +120,7 @@ describe("ImportCsv - importItems", () => {
     })
 
     it("skips existing items addition", async () => {
-        const collectionLoc = mockCollectionLoc({ itemsExists: true, collectionCanUpload: false });
+        const collectionLoc = mockCollectionLoc({ itemsExists: true, canUpload: false });
         await importCsv.importItems(collectionLoc.object(), csvItemsWithoutFile, signer, csvImportParams);
         collectionLoc.verify(instance => instance.addCollectionItems(It.IsAny<BlockchainBatchSubmission<AddCollectionItemParams>>()),
             Times.Never()
@@ -124,7 +131,7 @@ describe("ImportCsv - importItems", () => {
     })
 
     it("skips existing item addition but uploads file", async () => {
-        const collectionLoc = mockCollectionLoc({ itemsExists: true, collectionCanUpload: true });
+        const collectionLoc = mockCollectionLoc({ itemsExists: true, canUpload: true });
         const hashOrContent = [
             await getFile(csvImportParams.dir!, "test-0.pdf"),
             await getFile(csvImportParams.dir!, "test-1.pdf"),
@@ -148,8 +155,8 @@ describe("ImportCsv - importItems", () => {
 
 })
 
-function mockCollectionLoc(params: { itemsExists: boolean, collectionCanUpload: boolean }): Mock<ClosedCollectionLoc> {
-    const { itemsExists, collectionCanUpload } = params;
+function mockCollectionLoc(params: { itemsExists: boolean, canUpload: boolean }): Mock<ClosedCollectionLoc> {
+    const { itemsExists, canUpload } = params;
     const collectionLoc = new Mock<ClosedCollectionLoc>();
 
     const collectionItem = new Mock<CollectionItemClass>();
@@ -159,7 +166,7 @@ function mockCollectionLoc(params: { itemsExists: boolean, collectionCanUpload: 
         );
     }
     collectionLoc.setup(instance => instance.data()).returns({
-        collectionCanUpload
+        collectionParams: { canUpload }
     } as LocData);
     collectionLoc.setup(instance => instance.getCollectionItem(It.IsAny<Hash>())).returns(
         itemsExists ? Promise.resolve(collectionItem.object()) : Promise.resolve(undefined)

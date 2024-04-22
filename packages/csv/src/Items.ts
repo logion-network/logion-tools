@@ -4,7 +4,9 @@ import {
     MimeType,
     ItemTokenWithRestrictedType,
     TokenType,
-    LogionClassificationParameters, SpecificLicense, CreativeCommonsCode
+    LogionClassificationParameters,
+    SpecificLicense,
+    CreativeCommonsCode
 } from "@logion/client";
 import { UUID, Hash } from "@logion/node-api";
 

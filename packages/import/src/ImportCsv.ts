@@ -1,13 +1,22 @@
 import { Command, Option, InvalidArgumentError } from "commander";
 import { ValidateCsv } from "./ValidateCsv.js";
-import { CsvItem, toItem, CsvItemWithFile } from "@logion/csv";
+import { CsvItem, toItem, CsvItemWithFile, BatchMaker } from "@logion/csv";
 import { UUID, Hash } from "@logion/node-api";
-import { Environment, EnvironmentString, FullSigner, HashOrContent, KeyringSigner, ClosedCollectionLoc, Signer, MimeType, LogionClient } from "@logion/client";
+import {
+    Environment,
+    EnvironmentString,
+    FullSigner,
+    HashOrContent,
+    KeyringSigner,
+    ClosedCollectionLoc,
+    Signer,
+    MimeType,
+    LogionClient,
+    AddCollectionItemParams
+} from "@logion/client";
 import { newLogionClient, NodeFile, NodeAxiosFileUploader } from "@logion/client-node";
 import { Keyring } from "@polkadot/api";
 import fs from "fs/promises";
-import { AddCollectionItemParams } from "@logion/client/dist/LocClient.js";
-import { BatchMaker } from "@logion/csv/dist/BatchMaker.js";
 
 export interface CsvImportParams {
     env: EnvironmentString,
@@ -125,7 +134,8 @@ export class ImportCsv {
     }
 
     private async importItemBatch(collection: ClosedCollectionLoc, csvItems: CsvItem[], signer: Signer, dir: string | undefined): Promise<void> {
-        const collectionAcceptsUpload = collection.data().collectionCanUpload !== undefined && collection.data().collectionCanUpload === true;
+        const { collectionParams } = collection.data();
+        const collectionAcceptsUpload = collectionParams !== undefined && collectionParams.canUpload;
         const payload: AddCollectionItemParams[] = [];
         const items = csvItems.map(csvItem => toItem(csvItem, collectionAcceptsUpload));
 
