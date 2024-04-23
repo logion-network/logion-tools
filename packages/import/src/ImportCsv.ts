@@ -1,7 +1,7 @@
 import { Command, Option, InvalidArgumentError } from "commander";
 import { ValidateCsv } from "./ValidateCsv.js";
 import { CsvItem, toItem, CsvItemWithFile, BatchMaker } from "@logion/csv";
-import { UUID, Hash } from "@logion/node-api";
+import { UUID, Hash, ValidAccountId } from "@logion/node-api";
 import {
     Environment,
     EnvironmentString,
@@ -25,6 +25,8 @@ export interface CsvImportParams {
     suri: string,
     batchSize: number,
     local: boolean,
+    logionClassificationLoc?: UUID | undefined,
+    creativeCommonsLoc?: UUID | undefined,
 }
 
 export class ImportCsv {
@@ -41,6 +43,15 @@ export class ImportCsv {
         return this._command;
     }
 
+    private uuidParser(uuidString: string, errorMessage: string): UUID {
+        const uuid = UUID.fromAnyString(uuidString);
+        if (uuid) {
+            return uuid;
+        } else {
+            throw new InvalidArgumentError(errorMessage);
+        }
+    }
+
     private createCommand(): Command {
         return new Command("import-csv")
             .addOption(new Option("--env <environment>", "The environment")
@@ -49,14 +60,7 @@ export class ImportCsv {
             )
             .addOption(new Option("--loc <locId>", "The Collection LOC ID (decimal or UUID)")
                 .makeOptionMandatory()
-                .argParser<UUID>(locIdString => {
-                    const locId = UUID.fromAnyString(locIdString);
-                    if (locId) {
-                        return locId;
-                    } else {
-                        throw new InvalidArgumentError("Invalid collection LOC ID");
-                    }
-                })
+                .argParser<UUID>(locIdString => this.uuidParser(locIdString, "Invalid collection LOC ID"))
             )
             .addOption(new Option("--suri <suriPath>", "The path to the Secret key of the account")
                 .makeOptionMandatory()
@@ -68,6 +72,12 @@ export class ImportCsv {
             )
             .addOption(new Option("--local", "Connect to local node (--env value ignored)")
                 .implies({ env: "DEV" })
+            )
+            .addOption(new Option("--logionClassificationLoc <locId>", "The Logion Classification LOC ID (decimal or UUID)")
+                .argParser<UUID>(locIdString => this.uuidParser(locIdString, "Invalid Logion Classification LOC ID"))
+            )
+            .addOption(new Option("--creativeCommonsLoc <locId>", "The Creative Commons LOC ID (decimal or UUID)")
+                .argParser<UUID>(locIdString => this.uuidParser(locIdString, "Invalid Creative Commons LOC ID"))
             )
             .argument("<csvFiles...>", "the csv files to import")
             .action((csvFiles, csvImportParams) => this.importCsvFiles(csvImportParams, csvFiles))
@@ -81,14 +91,15 @@ export class ImportCsv {
                 buildFileUploader: () => new NodeAxiosFileUploader(),
                 directoryEndpoint: "http://localhost:8090",
                 rpcEndpoints: [ "ws://127.0.0.1:9944" ],
+                logionClassificationLoc: csvImportParams.logionClassificationLoc,
+                creativeCommonsLoc: csvImportParams.creativeCommonsLoc,
             }) :
             await newLogionClient(csvImportParams.env);
 
         console.log("Logion Classification %s", anonymousClient.config.logionClassificationLoc);
         console.log("Creative Commons %s", anonymousClient.config.creativeCommonsLoc);
 
-        const { signer, address } = await this.buildSigner(csvImportParams.suri);
-        const requesterAccount = anonymousClient.logionApi.queries.getValidAccountId(address, "Polkadot");
+        const { signer, requesterAccount } = await this.buildSigner(csvImportParams.suri);
         const client = await anonymousClient.authenticate([ requesterAccount ], signer)
 
         const locsState = await client.locsState({
@@ -105,12 +116,13 @@ export class ImportCsv {
         return anonymousClient.disconnect()
     }
 
-    private async buildSigner(seedPath: string): Promise<{ signer: FullSigner, address: string }> {
+    private async buildSigner(seedPath: string): Promise<{ signer: FullSigner, requesterAccount: ValidAccountId }> {
         const seed = await fs.readFile(seedPath, { encoding: 'utf8' });
         const keyring = new Keyring({ type: 'sr25519' });
         const { address } = keyring.addFromUri(seed.trim());
-        console.log("Polkadot address: %s", address);
-        return { signer: new KeyringSigner(keyring), address };
+        const requesterAccount = ValidAccountId.polkadot(address)
+        console.log("Polkadot address: %s", requesterAccount.address);
+        return { signer: new KeyringSigner(keyring), requesterAccount };
     }
 
     private async importCsv(collectionLoc: ClosedCollectionLoc, csvFile: string, signer: Signer, csvImportParams: CsvImportParams): Promise<void> {
