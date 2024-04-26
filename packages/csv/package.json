@@ -1,6 +1,6 @@
 {
   "name": "@logion/csv",
-  "version": "0.1.1",
+  "version": "0.1.2-1",
   "description": "Logion CSV Validator",
   "main": "dist/index.js",
   "packageManager": "yarn@3.2.0",
@@ -25,7 +25,7 @@
   "author": "Logion Team",
   "license": "Apache-2.0",
   "dependencies": {
-    "@logion/node-api": "^0.28.0"
+    "@logion/node-api": "^0.29.0"
   },
   "bugs": {
     "url": "https://github.com/logion-network/logion-tools/issues"
