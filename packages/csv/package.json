@@ -1,6 +1,6 @@
 {
   "name": "@logion/csv",
-  "version": "0.1.2-1",
+  "version": "0.1.2",
   "description": "Logion CSV Validator",
   "main": "dist/index.js",
   "packageManager": "yarn@3.2.0",
