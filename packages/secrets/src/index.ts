@@ -11,9 +11,9 @@ const program = new Command();
 const generate = new Generate();
 const reconstruct =new Reconstruct();
 
-program
+await program
     .nameFromFilename("logion-secrets")
     .description("A tool to generate encrypt secret values / reconstruct values from encrypted secrets")
     .addCommand(generate.command)
     .addCommand(reconstruct.command)
-    .parse(process.argv)
+    .parseAsync(process.argv)
