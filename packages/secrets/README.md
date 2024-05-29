@@ -4,7 +4,7 @@
 
 from published package
 ```shell
-sudo npm install @logion/secrets -g`
+sudo npm install @logion/secrets -g
 ```
 
 from sources:
@@ -16,7 +16,7 @@ sudo npm install . -g
 To generate the secrets from a secret key stored in `./test/sample-suri.txt`:
 
 ```shell
-logion-secrets generate --suri-file ./test/sample-suri.txt`
+logion-secrets generate --suri-file ./test/sample-suri.txt
 ```
 
 To reconstruct a secret key and write it to the file `/tmp/sample-suri.txt`:
